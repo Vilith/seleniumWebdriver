@@ -139,40 +139,6 @@ public class UserStepdefs {
         }
     }
 
-      /*  if (registered.equalsIgnoreCase("yes")) {
-            expectedTitle = "Success | Mailchimp";
-            try {
-                wait.until(ExpectedConditions.titleContains(expectedTitle));
-                wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#signup-success > div > div.content.line.section > section > div > h1")));
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
-            }
-            confirmationMessage = driver.findElement(By.cssSelector("#signup-success > div > div.content.line.section > section > div > h1"));
-
-            if (confirmationMessage.isDisplayed()) {
-                assertEquals(expectedTitle, driver.getTitle());
-                assertTrue(confirmationMessage.getText().contains(message));
-            }
-
-        } else if (registered.equalsIgnoreCase("no")) {
-            expectedTitle = "Signup | Mailchimp";
-            try {
-                wait.until(ExpectedConditions.titleContains(expectedTitle));
-                wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".invalid-error")));
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
-            }
-            errorMessage = driver.findElement(By.cssSelector(".invalid-error"));
-
-            if (errorMessage.getText().contains(message))
-                assertTrue(errorMessage.isDisplayed());
-            assertThat(errorMessage.getText(), containsString(message));
-
-        } else
-            System.out.println("Something went wrong!");*/
-
     @After
     public void tearDown() {
         driver.close();
