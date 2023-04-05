@@ -1,6 +1,5 @@
 package stepDef;
 
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Duration;
@@ -22,7 +21,6 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,17 +33,20 @@ public class UserStepdefs {
 
     @Given("i am using {string}")
     public void iAmUsing(String browser) {
-
-        if (browser.equalsIgnoreCase("chrome")) {
-            System.setProperty("webdriver.chrome.driver", "C:/Selenium/chromedriver.exe");
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--remote-allow-origins=*");
-            driver = new ChromeDriver(options);
-        } else if (browser.equalsIgnoreCase("edge")) {
-            System.setProperty("webdriver.edge.driver", "C:\\Selenium\\msedgedriver.exe");
-            EdgeOptions option = new EdgeOptions();
-            option.setCapability("ms:inPrivate", true);
-            driver = new EdgeDriver(option);
+        switch (browser.toLowerCase()) {
+            case "chrome" -> {
+                System.setProperty("webdriver.chrome.driver", "C:/Selenium/chromedriver.exe");
+                ChromeOptions chromeOptions = new ChromeOptions();
+                chromeOptions.addArguments("--remote-allow-origins=*");
+                driver = new ChromeDriver(chromeOptions);
+            }
+            case "edge" -> {
+                System.setProperty("webdriver.edge.driver", "C:\\Selenium\\msedgedriver.exe");
+                EdgeOptions edgeOptions = new EdgeOptions();
+                edgeOptions.setCapability("ms:inPrivate", true);
+                driver = new EdgeDriver(edgeOptions);
+            }
+            default -> throw new IllegalStateException("Value not correct: " + browser);
         }
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         driver.manage().window().maximize();
@@ -55,31 +56,26 @@ public class UserStepdefs {
     public void thatIAmOnTheRegistrationpage() {
         driver.get("https://login.mailchimp.com/signup/");
         wait.until(ExpectedConditions.titleContains("Signup | Mailchimp"));
-
     }
 
     @When("i submit {string} {string} and {string}")
     public void iSubmitAnd(String username, String email, String password) {
-        LocalDate date = LocalDate.now();
-        LocalTime time = LocalTime.now();
-        String uniqueUsername = date + username + time;
+        String uniqueUsername = generateUniqueUsername(username);
 
         if (uniqueUsername.contains("testExistingUser") || email.contains("thisemailexists")) {
-            inputInfo(username, email, password);
-            //WebElement user = driver.findElement(By.id("new_username"));
-            //user.sendKeys(username);
-            //WebElement mail = driver.findElement(By.id("email"));
-            //mail.sendKeys(email + "@testing.com");
+            fillRegistrationForm(username, email, password);
         } else {
-            inputInfo(uniqueUsername.replace(".", "").replace(":", "").replace("-", ""), email, password);
-            // WebElement user = driver.findElement(By.id("new_username"));
-            // user.sendKeys(uniqueUsername.replace(".", "").replace(":", "").replace("-", ""));
-            // WebElement mail = driver.findElement(By.id("email"));
-            // mail.sendKeys(email + "@testing.com");
+            fillRegistrationForm(uniqueUsername.replace(".", "").replace(":", "").replace("-", ""), email, password);
         }
     }
 
-    private void inputInfo(String username, String email, String password) {
+    private String generateUniqueUsername(String username) {
+        LocalDate date = LocalDate.now();
+        LocalTime time = LocalTime.now();
+        return date + username + time;
+    }
+
+    private void fillRegistrationForm(String username, String email, String password) {
         WebElement user = driver.findElement(By.id("new_username"));
         user.sendKeys(username);
 
@@ -88,7 +84,6 @@ public class UserStepdefs {
 
         WebElement psw = driver.findElement(By.id("new_password"));
         psw.sendKeys(password);
-
     }
 
     @And("i click signup button")
@@ -97,204 +92,86 @@ public class UserStepdefs {
         WebElement checkBox = driver.findElement(By.name("marketing_newsletter"));
         checkBox.click();
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-
         wait.until(ExpectedConditions.presenceOfElementLocated(By.id("create-account-enabled")));
+
         WebElement button = driver.findElement(By.id("create-account-enabled"));
         action.moveToElement(button).perform();
         button.click();
-
     }
-   /* @Then("i should be {string} and get {string}")
-    public void iShouldBeAndGet(String registered, String message) {
-        String expectedTitle;
-        String expected = message;
-        String captcha;
-
-        if (registered.equalsIgnoreCase("yes")) {
-            expectedTitle = "Success | Mailchimp";
-            wait.until(ExpectedConditions.titleContains(expectedTitle));
-            successText = driver.findElement(By.xpath("//*[@id=\"signup-success\"]/div/div[1]/section/div/h1"));
-
-            if (successText.isDisplayed()) {
-                assertTrue(successText.getText().contains(message));
-                assertEquals(message, successText.getText());
-
-            }
-        }
-        else if (registered.equalsIgnoreCase("no")) {
-            expectedTitle = "Signup | Mailchimp";
-            wait.until(ExpectedConditions.titleContains(expectedTitle));
-            errorMessage = driver.findElement(By.xpath("//*[@id=\"signup-form\"]/fieldset/div[2]/div/span/text()[1] | //*[@id=\"signup-form\"]/fieldset/div[1]/div/span"));
-            error = driver.findElement(By.cssSelector("#signup-form > fieldset > div:nth-child(2) > div > span, #signup-form > fieldset > div:nth-child(2) > div > span"));
-
-            if (errorMessage.isDisplayed() || (error.isDisplayed()) ) {
-                assertTrue(errorMessage.getText().contains(message));
-                assertEquals(expected, errorMessage.getText());
-                assertEquals(message, errorMessage.getText(), error.getText());
-            }
-            else
-                System.out.println("blä");
-        }
-
-
-        //if (!registered.equalsIgnoreCase("yes") && !registered.equalsIgnoreCase("no")) {  //*[@id="signup-form"]/fieldset/div[2]/div/span/text()[1]   //*[@id="signup-form"]/fieldset/div[2]/div/span/text()[2]
-          //  System.out.println("captcha located");        #signup-form > fieldset > div:nth-child(2) > div > span   //*[@id="signup-form"]/fieldset/div[1]/div/span  //*[@id="signup-form"]/fieldset/div[2]/div/span
-
-    }*/
 
     @Then("i should be {string} and get {string}")
     public void iShouldBeAndGet(String registered, String message) {
         String expectedTitle;
-        WebElement errorMessage, yesMessage;
+        WebElement errorMessage, confirmationMessage;
 
-        if (registered.equalsIgnoreCase("yes")) {
+        switch (registered.toLowerCase()) {
+            case "yes" -> {
+                expectedTitle = "Success | Mailchimp";
+                try {
+                    wait.until(ExpectedConditions.titleContains(expectedTitle));
+                    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#signup-success > div > div.content.line.section > section > div > h1")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw e;
+                }
+                confirmationMessage = driver.findElement(By.cssSelector("#signup-success > div > div.content.line.section > section > div > h1"));
+                if (confirmationMessage.isDisplayed()) {
+                    assertEquals(expectedTitle, driver.getTitle());
+                    assertTrue(confirmationMessage.getText().contains(message));
+                }
+            }
+            case "no" -> {
+                expectedTitle = "Signup | Mailchimp";
+                try {
+                    wait.until(ExpectedConditions.titleContains(expectedTitle));
+                    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".invalid-error")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw e;
+                }
+                errorMessage = driver.findElement(By.cssSelector(".invalid-error"));
+                if (errorMessage.getText().contains(message)) {
+                    assertTrue(errorMessage.isDisplayed());
+                    assertThat(errorMessage.getText(), containsString(message));
+                }
+            }
+            default -> System.out.println("Something went wrong!");
+        }
+    }
+
+      /*  if (registered.equalsIgnoreCase("yes")) {
             expectedTitle = "Success | Mailchimp";
-            wait.until(ExpectedConditions.titleContains(expectedTitle));
+            try {
+                wait.until(ExpectedConditions.titleContains(expectedTitle));
+                wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#signup-success > div > div.content.line.section > section > div > h1")));
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw e;
+            }
+            confirmationMessage = driver.findElement(By.cssSelector("#signup-success > div > div.content.line.section > section > div > h1"));
 
-            // errorMessage = driver.findElement(By.xpath("//*[@id=\"signup-form\"]/fieldset/div[2]/div/span"));
-            yesMessage = driver.findElement(By.cssSelector("#signup-success > div > div.content.line.section > section > div > h1"));
-
-            if (yesMessage.isDisplayed()) {
+            if (confirmationMessage.isDisplayed()) {
                 assertEquals(expectedTitle, driver.getTitle());
-                assertTrue(yesMessage.getText().contains(message));
-                System.out.println("Actual: " + yesMessage.getText());
-                System.out.println("Expected: " + message);
+                assertTrue(confirmationMessage.getText().contains(message));
             }
 
         } else if (registered.equalsIgnoreCase("no")) {
             expectedTitle = "Signup | Mailchimp";
-            wait.until(ExpectedConditions.titleContains(expectedTitle));
-            //wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#av-flash-errors > ul > li, #signup-form > fieldset > div.line.login-field.margin-bottom--lv2 > div > div:nth-child(1) > div > label, #slot-preShell > div.c-langSelectorHeader.flex.flex-direction--column.flex-grow-1 > div:nth-child(1) > a > img")));
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".invalid-error")));
-
+            try {
+                wait.until(ExpectedConditions.titleContains(expectedTitle));
+                wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".invalid-error")));
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw e;
+            }
             errorMessage = driver.findElement(By.cssSelector(".invalid-error"));
-            //errorMessage = driver.findElement(By.cssSelector("#signup-form > fieldset > div:nth-child(2) > div > span, #signup-form > fieldset > div:nth-child(1) > div > span"));
-            //errorMessage = driver.findElement(By.xpath("//*[@id=\"signup-form\"]/fieldset/div[1]/div/span | //*[@id=\"signup-form\"]/fieldset/div[2]/div/span"));
+
             if (errorMessage.getText().contains(message))
-                System.out.println("Actual: " + errorMessage.getText());
-            System.out.println("Expected: " + message);
-            assertTrue(errorMessage.isDisplayed());
-            //assertEquals(expectedTitle, driver.getTitle());
+                assertTrue(errorMessage.isDisplayed());
             assertThat(errorMessage.getText(), containsString(message));
-            //assertEquals(message, errorMessage.getText());
-            System.out.println(message + " " + errorMessage.getText());
 
         } else
-            System.out.println("A wild captcha appeared! Maybe try catching it with a pokeball?");
-
-    }
-
-
-/*
-    @Then("i should be {string} and get {string}")
-    public void iShouldBeAndGet(String registered, String message) {
-        String actualMessage;
-        String expected;
-        if (registered.equalsIgnoreCase("yes")) {
-            wait.until(ExpectedConditions.titleContains("Success | Mailchimp"));
-            expected = "Success | Mailchimp";
-            WebElement success = driver.findElement(By.cssSelector(".margin-right--lv4 > a:nth-child(1), div.float--left:nth-child(3) > p:nth-child(2) > a:nth-child(1), #resend-email-link"));
-
-            if (success.isDisplayed()) {
-                assertEquals(expected, driver.getTitle());
-                System.out.println(message);
-            } else {
-                expected = "recaptcha challenge expires in two minutes";
-                wait.until(ExpectedConditions.titleContains("recaptcha challenge expires in two minutes"));
-                // If the success element is not displayed, it means the captcha was shown  #recaptcha-token html
-                //WebElement captcha = driver.findElement(By.cssSelector("#recaptcha-token, #rc-imageselect > div.rc-footer > div.rc-controls > div.rc-challenge-help > a, #recaptcha-help-button"));  body > div:nth-child(16) > div:nth-child(2) > iframe
-                //WebElement captcha = driver.findElement(By.id("recaptcha-verify-button"));  head title reCAPTCHA
-                //WebElement captcha = driver.findElement(By.xpath("/html/body/script/text()"));
-                //assertTrue(captcha.isDisplayed());
-                assertEquals(expected, driver.getTitle());
-            }
-        } else if (registered.equalsIgnoreCase("no")) {
-            errorMessage = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#signup-form > fieldset > div:nth-child(1) > div > span, #signup-form > fieldset > div:nth-child(2) > div > span")));
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.className("padding--lv3 !padding-top-bottom--lv0")));
-            expected = "Signup | Mailchimp";
-
-            WebElement noSuccess = driver.findElement(By.cssSelector("#marketing_newsletter, .c-headingSignUp > span:nth-child(1), .c-recaptchaDisclaimer > span:nth-child(1), .invalid-error"));
-
-            actualMessage = errorMessage.getText();
-            assertTrue(noSuccess.isDisplayed());
-            assertEquals(message, actualMessage);
-        } else {
-
-            wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#rc-imageselect > div.rc-footer > div.rc-controls > div.rc-challenge-help > a")));
-            wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#recaptcha-reload-button, #recaptcha-audio-button, #recaptcha-help-button, #recaptcha-verify-button")));
-        }
-    }
-*/
-
-
-/*
-    @Then("i should be {string}")
-    public void iShouldBe(String registered) {
-        //wait.until(ExpectedConditions.titleContains("Success | Mailchimp"));
-
-        String errorMessage;
-        String expected;
-        if (registered.equalsIgnoreCase("yes")) {
-            wait.until(ExpectedConditions.titleContains("Success | Mailchimp"));
-            expected = "Success | Mailchimp";
-            WebElement success = driver.findElement(By.cssSelector(".margin-right--lv4 > a:nth-child(1), div.float--left:nth-child(3) > p:nth-child(2) > a:nth-child(1), #resend-email-link"));
-
-            if (success.isDisplayed()) {
-                assertEquals(expected, driver.getTitle());
-                System.out.println("jippi");
-            } else {
-                expected = "recaptcha challenge expires in two minutes";
-                wait.until(ExpectedConditions.titleContains("recaptcha challenge expires in two minutes"));
-                // If the success element is not displayed, it means the captcha was shown  #recaptcha-token html
-                //WebElement captcha = driver.findElement(By.cssSelector("#recaptcha-token, #rc-imageselect > div.rc-footer > div.rc-controls > div.rc-challenge-help > a, #recaptcha-help-button"));  body > div:nth-child(16) > div:nth-child(2) > iframe
-                //WebElement captcha = driver.findElement(By.id("recaptcha-verify-button"));  head title reCAPTCHA
-                //WebElement captcha = driver.findElement(By.xpath("/html/body/script/text()"));
-                //assertTrue(captcha.isDisplayed());
-                assertEquals(expected, driver.getTitle());
-            }
-        } else if (registered.equalsIgnoreCase("no")) {
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.className("padding--lv3 !padding-top-bottom--lv0")));
-            expected = "Signup | Mailchimp";
-
-            WebElement noSuccess = driver.findElement(By.cssSelector("#marketing_newsletter, .c-headingSignUp > span:nth-child(1), .c-recaptchaDisclaimer > span:nth-child(1), .invalid-error"));
-
-            assertTrue(noSuccess.isDisplayed());
-            assertEquals(expected, driver.getTitle());
-        } else {
-
-            wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#rc-imageselect > div.rc-footer > div.rc-controls > div.rc-challenge-help > a")));
-            wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#recaptcha-reload-button, #recaptcha-audio-button, #recaptcha-help-button, #recaptcha-verify-button")));
-        }
-    }*/
-
-      /*  wait.until(ExpectedConditions.titleContains("Success | Mailchimp"));
-        String expected;
-
-        if (registered.equalsIgnoreCase("yes")) {
-            wait.until(ExpectedConditions.titleContains("Success | Mailchimp"));
-            expected = "Success | Mailchimp";
-            //css-path till 3 element
-            WebElement success = driver.findElement(By.cssSelector(".margin-right--lv4 > a:nth-child(1), div.float--left:nth-child(3) > p:nth-child(2) > a:nth-child(1), #resend-email-link"));
-
-            assertTrue(success.isDisplayed());
-            assertEquals(expected, driver.getTitle());
-
-            //WebElement success = driver.findElement(By.cssSelector(".\\!margin-bottom--lv3"));
-            //assertEquals(expected, "Check your email");
-            //driver.getTitle().equals("Success | Mailchimp");
-
-        } else if (registered.equalsIgnoreCase("no")) {
-            wait.until(ExpectedConditions.titleContains("Signup | Mailchimp"));
-            expected = "Signup | Mailchimp";
-
-            WebElement noSuccess = driver.findElement(By.cssSelector("#marketing_newsletter, .c-headingSignUp > span:nth-child(1), .c-recaptchaDisclaimer > span:nth-child(1)"));
-
-            assertTrue(noSuccess.isDisplayed());
-            assertEquals(expected, driver.getTitle());    <button class="rc-button-default goog-inline-block" title="" value="" id="recaptcha-verify-button" tabindex="0">Verify</button>
-        }
-        //wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#recaptcha-reload-button, #recaptcha-audio-button, #recaptcha-help-button, #recaptcha-verify-button")));
-    }*/
+            System.out.println("Something went wrong!");*/
 
     @After
     public void tearDown() {
@@ -302,6 +179,3 @@ public class UserStepdefs {
         driver.quit();
     }
 }
-
-
-
